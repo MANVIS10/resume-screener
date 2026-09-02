@@ -9,7 +9,9 @@ via a FastAPI dependency, so hitting `/admin/jds/{id}` directly without the cook
 gets a 303 to the login page — there's no client-side-only hiding of scores.
 
 **LLM design.** The prompt sends the full JD text and the resume text extracted via
-`python-docx`, forces strict JSON output (`match_score`, `fit_summary`, `gaps`), and
+`python-docx` (or `pypdf` for `.pdf` uploads — the brief specified `.docx` only, but
+support for `.pdf` was added on request), forces strict JSON output (`match_score`,
+`fit_summary`, `gaps`), and
 explicitly instructs the model to cite concrete overlaps/mismatches rather than
 generic praise, and to produce interview-ready follow-up questions. Malformed JSON
 raises loudly and is logged rather than silently stored as a blank score. Tested
