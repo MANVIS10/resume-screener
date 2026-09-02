@@ -3,7 +3,11 @@
 {% block nav %}<a href="/admin">All JDs</a> <a href="/admin/logout">Log out</a>{% endblock %}
 {% block content %}
 <h1>{{ job.title }}</h1>
-<p class="meta">{{ job.company }} &middot; posted {{ job.created_at }}</p>
+<div class="stat-row">
+    <span><strong>{{ job.company }}</strong></span>
+    <span>Posted {{ job.created_at }}</span>
+    <span>{{ resumes|length }} application(s)</span>
+</div>
 
 <div class="card">
     <details>
@@ -14,7 +18,7 @@
 
 <h2>Applications ({{ resumes|length }})</h2>
 {% if not resumes %}
-<div class="card"><p>No applications yet for this role.</p></div>
+<div class="card empty-state"><p>No applications yet for this role. Share the candidate link once you're ready.</p></div>
 {% endif %}
 {% for r in resumes %}
 <div class="card">

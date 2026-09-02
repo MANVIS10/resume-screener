@@ -24,7 +24,7 @@
 
 <h2>All JDs</h2>
 {% if not jobs %}
-<div class="card"><p>No JDs posted yet.</p></div>
+<div class="card empty-state"><p>No JDs posted yet. Use the form above to post your first job description.</p></div>
 {% endif %}
 {% for job in jobs %}
 <div class="card job-list-item">

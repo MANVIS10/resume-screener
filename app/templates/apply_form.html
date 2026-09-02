@@ -15,7 +15,8 @@
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
 <div class="card">
-    <form method="post" action="/apply/{{ job.id }}" enctype="multipart/form-data">
+    <form method="post" action="/apply/{{ job.id }}" enctype="multipart/form-data"
+          onsubmit="document.getElementById('submit-btn').disabled=true; document.getElementById('submit-btn').textContent='Submitting…';">
         <label for="full_name">Full name</label>
         <input type="text" id="full_name" name="full_name" required>
 
@@ -34,11 +35,18 @@
         <label for="location">Current location / place</label>
         <input type="text" id="location" name="location" required>
 
-        <label for="resume">Resume (.docx only)</label>
-        <input type="file" id="resume" name="resume" accept=".docx" required>
+        <label for="resume">Resume</label>
+        <div class="file-picker">
+            <label class="file-picker-label" for="resume">
+                <span id="file-picker-text">Choose a .docx file</span>
+            </label>
+            <input type="file" id="resume" name="resume" accept=".docx" required
+                   onchange="document.getElementById('file-picker-text').textContent = this.files.length ? this.files[0].name : 'Choose a .docx file'; document.getElementById('file-picker-text').className = this.files.length ? 'file-picker-filename' : '';">
+        </div>
+        <p class="field-hint">Accepted format: Word (.docx) only.</p>
 
         <div style="margin-top:1.5rem;">
-            <button class="btn" type="submit">Submit Application</button>
+            <button class="btn" type="submit" id="submit-btn">Submit Application</button>
         </div>
     </form>
 </div>
