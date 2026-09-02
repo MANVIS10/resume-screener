@@ -12,7 +12,6 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from docx import Document
-from pypdf import PdfReader
 
 from app.db import init_db, db_session
 from app.auth import create_session_token, verify_session_token, require_admin, COOKIE_NAME
@@ -69,26 +68,21 @@ async def apply_submit(
         return templates.TemplateResponse("not_found.html", {"request": request}, status_code=404)
 
     filename = resume.filename or ""
-    lower_name = filename.lower()
-    if not (lower_name.endswith(".docx") or lower_name.endswith(".pdf")):
+    if not filename.lower().endswith(".docx"):
         return templates.TemplateResponse(
             "apply_form.html",
-            {"request": request, "job": job, "error": "Please upload a .docx or .pdf file — other formats (.doc, images) are not accepted."},
+            {"request": request, "job": job, "error": "Please upload a .docx file — other formats (PDF, .doc, images) are not accepted."},
             status_code=400,
         )
 
     raw_bytes = await resume.read()
     try:
-        if lower_name.endswith(".docx"):
-            doc = Document(io.BytesIO(raw_bytes))
-            resume_text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
-        else:
-            reader = PdfReader(io.BytesIO(raw_bytes))
-            resume_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        doc = Document(io.BytesIO(raw_bytes))
+        resume_text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
     except Exception:
         return templates.TemplateResponse(
             "apply_form.html",
-            {"request": request, "job": job, "error": "We couldn't read that file. Please make sure it's a valid .docx or .pdf document and try again."},
+            {"request": request, "job": job, "error": "We couldn't read that .docx file. Please make sure it's a valid Word document and try again."},
             status_code=400,
         )
 
