@@ -165,3 +165,31 @@ form textarea { min-height: 160px; font-family: inherit; resize: vertical; }
 .file-picker-label:hover { border-color: var(--color-primary); }
 .file-picker-filename { font-weight: 600; color: var(--color-text); }
 .field-hint { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.25rem; }
+
+.empty-state {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--color-text-muted);
+}
+.stat-row {
+    display: flex;
+    gap: 1.5rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+.stat-row strong { color: var(--color-text); }
+details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+details summary:hover { text-decoration: underline; }
+details pre {
+    margin-top: 0.75rem;
+    background: var(--color-bg);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    max-height: 400px;
+    overflow-y: auto;
+}
