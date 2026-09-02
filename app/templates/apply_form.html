@@ -34,11 +34,18 @@
         <label for="location">Current location / place</label>
         <input type="text" id="location" name="location" required>
 
-        <label for="resume">Resume (.docx or .pdf)</label>
-        <input type="file" id="resume" name="resume" accept=".docx,.pdf" required>
+        <label for="resume">Resume</label>
+        <div class="file-picker">
+            <label class="file-picker-label" for="resume">
+                <span id="file-picker-text">Choose a .docx or .pdf file</span>
+            </label>
+            <input type="file" id="resume" name="resume" accept=".docx,.pdf" required
+                   onchange="document.getElementById('file-picker-text').textContent = this.files.length ? this.files[0].name : 'Choose a .docx or .pdf file'; document.getElementById('file-picker-text').className = this.files.length ? 'file-picker-filename' : '';">
+        </div>
+        <p class="field-hint">Accepted formats: Word (.docx) or PDF (.pdf).</p>
 
         <div style="margin-top:1.5rem;">
-            <button class="btn" type="submit">Submit Application</button>
+            <button class="btn" type="submit" id="submit-btn" onclick="this.disabled=true; this.textContent='Submitting…'; this.form.submit();">Submit Application</button>
         </div>
     </form>
 </div>
