@@ -1,8 +1,7 @@
-import sqlite3
-from pathlib import Path
+import os
 from contextlib import contextmanager
 
-DB_PATH = Path(__file__).resolve().parent.parent / "resume_screener.db"
+import libsql
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS jds (
@@ -31,16 +30,20 @@ CREATE TABLE IF NOT EXISTS resumes (
 """
 
 
-def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
-
-
 @contextmanager
 def db_session():
-    conn = get_connection()
+    """Open a short-lived connection.
+
+    TURSO_DATABASE_URL is either a remote Turso URL (``libsql://...``), which
+    libsql opens over HTTP without touching the filesystem, or a plain file
+    path for local development. Serverless functions get a read-only disk, so
+    the remote form is the only one that works once deployed.
+    """
+    url = os.environ.get("TURSO_DATABASE_URL")
+    if not url:
+        raise RuntimeError("TURSO_DATABASE_URL is not set")
+
+    conn = libsql.connect(url, auth_token=os.environ.get("TURSO_AUTH_TOKEN", ""))
     try:
         yield conn
         conn.commit()
@@ -48,6 +51,27 @@ def db_session():
         conn.close()
 
 
-def init_db():
+def _rows_to_dicts(cursor) -> list[dict]:
+    columns = [c[0] for c in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+def query(sql: str, params: tuple = ()) -> list[dict]:
+    with db_session() as conn:
+        return _rows_to_dicts(conn.execute(sql, params))
+
+
+def query_one(sql: str, params: tuple = ()) -> dict | None:
+    rows = query(sql, params)
+    return rows[0] if rows else None
+
+
+def execute(sql: str, params: tuple = ()) -> None:
+    with db_session() as conn:
+        conn.execute(sql, params)
+
+
+def init_db() -> None:
+    """Create tables. Run once as a migration, not per request."""
     with db_session() as conn:
         conn.executescript(SCHEMA)

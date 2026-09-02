@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from docx import Document
 
-from app.db import init_db, db_session
+from app.db import query, query_one, execute
 from app.auth import create_session_token, verify_session_token, require_admin, COOKIE_NAME
 from app.llm import score_resume, LLMScoringError
 
@@ -27,24 +27,17 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "app", "templates")
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "app", "static")), name="static")
 
 
-@app.on_event("startup")
-def on_startup():
-    init_db()
-
-
 # ---------- Public / candidate routes ----------
 
 @app.get("/", response_class=HTMLResponse)
 def list_jobs(request: Request):
-    with db_session() as conn:
-        jobs = conn.execute("SELECT id, title, company, created_at FROM jds ORDER BY created_at DESC").fetchall()
+    jobs = query("SELECT id, title, company, created_at FROM jds ORDER BY created_at DESC")
     return templates.TemplateResponse("candidate_jobs.html", {"request": request, "jobs": jobs})
 
 
 @app.get("/apply/{jd_id}", response_class=HTMLResponse)
 def apply_form(request: Request, jd_id: int):
-    with db_session() as conn:
-        job = conn.execute("SELECT id, title, company, jd_text FROM jds WHERE id = ?", (jd_id,)).fetchone()
+    job = query_one("SELECT id, title, company, jd_text FROM jds WHERE id = ?", (jd_id,))
     if job is None:
         return templates.TemplateResponse("not_found.html", {"request": request}, status_code=404)
     return templates.TemplateResponse("apply_form.html", {"request": request, "job": job, "error": None})
@@ -62,8 +55,7 @@ async def apply_submit(
     location: str = Form(...),
     resume: UploadFile = File(...),
 ):
-    with db_session() as conn:
-        job = conn.execute("SELECT id, title, company, jd_text FROM jds WHERE id = ?", (jd_id,)).fetchone()
+    job = query_one("SELECT id, title, company, jd_text FROM jds WHERE id = ?", (jd_id,))
     if job is None:
         return templates.TemplateResponse("not_found.html", {"request": request}, status_code=404)
 
@@ -104,17 +96,16 @@ async def apply_submit(
         fit_summary = f"[SCORING FAILED] {e}"
         gaps_json = json.dumps([])
 
-    with db_session() as conn:
-        conn.execute(
-            """INSERT INTO resumes
-               (jd_id, name, address, phone, email, age, location, resume_text,
-                match_score, fit_summary, gaps_json)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                jd_id, full_name, address, phone, email, age, location, resume_text,
-                match_score, fit_summary, gaps_json,
-            ),
-        )
+    execute(
+        """INSERT INTO resumes
+           (jd_id, name, address, phone, email, age, location, resume_text,
+            match_score, fit_summary, gaps_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            jd_id, full_name, address, phone, email, age, location, resume_text,
+            match_score, fit_summary, gaps_json,
+        ),
+    )
 
     return templates.TemplateResponse("apply_confirmation.html", {"request": request})
 
@@ -150,13 +141,12 @@ def admin_logout():
 
 @app.get("/admin", response_class=HTMLResponse)
 def admin_dashboard(request: Request, _=Depends(require_admin)):
-    with db_session() as conn:
-        jobs = conn.execute(
-            """SELECT jds.id, jds.title, jds.company, jds.created_at,
-                      COUNT(resumes.id) as resume_count
-               FROM jds LEFT JOIN resumes ON resumes.jd_id = jds.id
-               GROUP BY jds.id ORDER BY jds.created_at DESC"""
-        ).fetchall()
+    jobs = query(
+        """SELECT jds.id, jds.title, jds.company, jds.created_at,
+                  COUNT(resumes.id) as resume_count
+           FROM jds LEFT JOIN resumes ON resumes.jd_id = jds.id
+           GROUP BY jds.id ORDER BY jds.created_at DESC"""
+    )
     return templates.TemplateResponse("admin_dashboard.html", {"request": request, "jobs": jobs})
 
 
@@ -168,30 +158,27 @@ def admin_create_jd(
     jd_text: str = Form(...),
     _=Depends(require_admin),
 ):
-    with db_session() as conn:
-        conn.execute(
-            "INSERT INTO jds (title, company, jd_text) VALUES (?, ?, ?)",
-            (title, company, jd_text),
-        )
+    execute(
+        "INSERT INTO jds (title, company, jd_text) VALUES (?, ?, ?)",
+        (title, company, jd_text),
+    )
     return RedirectResponse(url="/admin", status_code=303)
 
 
 @app.get("/admin/jds/{jd_id}", response_class=HTMLResponse)
 def admin_view_jd(request: Request, jd_id: int, _=Depends(require_admin)):
-    with db_session() as conn:
-        job = conn.execute("SELECT id, title, company, jd_text, created_at FROM jds WHERE id = ?", (jd_id,)).fetchone()
-        if job is None:
-            return templates.TemplateResponse("not_found.html", {"request": request}, status_code=404)
-        resumes = conn.execute(
-            """SELECT id, name, address, phone, email, age, location,
-                      match_score, fit_summary, gaps_json, submitted_at
-               FROM resumes WHERE jd_id = ? ORDER BY submitted_at DESC""",
-            (jd_id,),
-        ).fetchall()
+    job = query_one("SELECT id, title, company, jd_text, created_at FROM jds WHERE id = ?", (jd_id,))
+    if job is None:
+        return templates.TemplateResponse("not_found.html", {"request": request}, status_code=404)
+    resumes = query(
+        """SELECT id, name, address, phone, email, age, location,
+                  match_score, fit_summary, gaps_json, submitted_at
+           FROM resumes WHERE jd_id = ? ORDER BY submitted_at DESC""",
+        (jd_id,),
+    )
 
     parsed_resumes = []
-    for r in resumes:
-        d = dict(r)
+    for d in resumes:
         try:
             d["gaps"] = json.loads(d["gaps_json"]) if d["gaps_json"] else []
         except (TypeError, ValueError):

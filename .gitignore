@@ -5,3 +5,6 @@ __pycache__/
 venv/
 resume_screener.db
 *.db
+.testdata/
+server.log
+.vercel
