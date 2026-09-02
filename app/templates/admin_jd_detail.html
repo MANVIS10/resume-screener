@@ -5,7 +5,7 @@
 <h1>{{ job.title }}</h1>
 <div class="stat-row">
     <span><strong>{{ job.company }}</strong></span>
-    <span>Posted {{ job.created_at }}</span>
+    <span>Posted {{ job.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
     <span>{{ resumes|length }} application(s)</span>
 </div>
 
@@ -43,7 +43,7 @@
             {% for g in r.gaps %}<li>{{ g }}</li>{% endfor %}
         </ul>
         {% endif %}
-        <p class="meta">Address: {{ r.address }} &middot; Submitted {{ r.submitted_at }}</p>
+        <p class="meta">Address: {{ r.address }} &middot; Submitted {{ r.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
     </div>
 </div>
 {% endfor %}

@@ -37,7 +37,7 @@ def list_jobs(request: Request):
 
 @app.get("/apply/{jd_id}", response_class=HTMLResponse)
 def apply_form(request: Request, jd_id: int):
-    job = query_one("SELECT id, title, company, jd_text FROM jds WHERE id = ?", (jd_id,))
+    job = query_one("SELECT id, title, company, jd_text FROM jds WHERE id = %s", (jd_id,))
     if job is None:
         return templates.TemplateResponse("not_found.html", {"request": request}, status_code=404)
     return templates.TemplateResponse("apply_form.html", {"request": request, "job": job, "error": None})
@@ -55,7 +55,7 @@ async def apply_submit(
     location: str = Form(...),
     resume: UploadFile = File(...),
 ):
-    job = query_one("SELECT id, title, company, jd_text FROM jds WHERE id = ?", (jd_id,))
+    job = query_one("SELECT id, title, company, jd_text FROM jds WHERE id = %s", (jd_id,))
     if job is None:
         return templates.TemplateResponse("not_found.html", {"request": request}, status_code=404)
 
@@ -100,7 +100,7 @@ async def apply_submit(
         """INSERT INTO resumes
            (jd_id, name, address, phone, email, age, location, resume_text,
             match_score, fit_summary, gaps_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
         (
             jd_id, full_name, address, phone, email, age, location, resume_text,
             match_score, fit_summary, gaps_json,
@@ -159,7 +159,7 @@ def admin_create_jd(
     _=Depends(require_admin),
 ):
     execute(
-        "INSERT INTO jds (title, company, jd_text) VALUES (?, ?, ?)",
+        "INSERT INTO jds (title, company, jd_text) VALUES (%s, %s, %s)",
         (title, company, jd_text),
     )
     return RedirectResponse(url="/admin", status_code=303)
@@ -167,13 +167,13 @@ def admin_create_jd(
 
 @app.get("/admin/jds/{jd_id}", response_class=HTMLResponse)
 def admin_view_jd(request: Request, jd_id: int, _=Depends(require_admin)):
-    job = query_one("SELECT id, title, company, jd_text, created_at FROM jds WHERE id = ?", (jd_id,))
+    job = query_one("SELECT id, title, company, jd_text, created_at FROM jds WHERE id = %s", (jd_id,))
     if job is None:
         return templates.TemplateResponse("not_found.html", {"request": request}, status_code=404)
     resumes = query(
         """SELECT id, name, address, phone, email, age, location,
                   match_score, fit_summary, gaps_json, submitted_at
-           FROM resumes WHERE jd_id = ? ORDER BY submitted_at DESC""",
+           FROM resumes WHERE jd_id = %s ORDER BY submitted_at DESC""",
         (jd_id,),
     )
 

@@ -9,7 +9,7 @@ only ever see a confirmation.
 - **Candidate** (`/`, public) — open roles, application form, `.docx` upload,
   confirmation. No scores anywhere.
 
-**Stack:** FastAPI + Jinja2 · Turso (libSQL) · Groq `openai/gpt-oss-120b` · Vercel.
+**Stack:** FastAPI + Jinja2 · Neon (Postgres) · Groq `openai/gpt-oss-120b` · Vercel.
 
 See [SHORTWRITEUP.md](SHORTWRITEUP.md) for approach and trade-offs.
 
@@ -23,8 +23,8 @@ python scripts/init_db.py                            # create tables
 uvicorn app.main:app --reload --port 8000
 ```
 
-`TURSO_DATABASE_URL` accepts a plain file path locally (`resume_screener.db`) and a
-`libsql://` URL in production — the same code path serves both.
+Local and production both talk to Neon. Use a Neon branch for development if you
+want to experiment without touching production data.
 
 ## Environment variables
 
@@ -33,14 +33,13 @@ uvicorn app.main:app --reload --port 8000
 | `GROQ_API_KEY` | Groq API key for resume scoring |
 | `ADMIN_PASSWORD` | Password for the admin login |
 | `SECRET_KEY` | Signs the admin session cookie — must stay stable across deploys |
-| `TURSO_DATABASE_URL` | `libsql://...` in production, a file path locally |
-| `TURSO_AUTH_TOKEN` | Turso token; leave empty for a local file |
+| `DATABASE_URL` | Neon connection string — use the **pooled** one (host contains `-pooler`) |
 
 ## Deploying
 
-1. Create the database at [turso.tech](https://turso.tech) and copy its URL and token.
-2. Point a local `.env` at it and run `python scripts/init_db.py` once to create the schema.
-3. `vercel` to link the project, set the five variables above in the Vercel dashboard
+1. Create a project at [neon.tech](https://neon.tech) and copy the pooled connection string.
+2. Put it in `.env` as `DATABASE_URL` and run `python scripts/init_db.py` once to create the schema.
+3. `vercel` to link the project, set the four variables above in the Vercel dashboard
    (or via `vercel env add`), then `vercel --prod`.
 
 `vercel.json` rewrites every path to `api/index.py`, which serves the FastAPI app.

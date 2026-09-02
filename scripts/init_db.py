@@ -16,4 +16,4 @@ from app.db import init_db  # noqa: E402
 
 if __name__ == "__main__":
     init_db()
-    print(f"Schema applied to {os.environ.get('TURSO_DATABASE_URL')}")
+    print(f"Schema applied to {os.environ.get('DATABASE_URL', '').split('@')[-1]}")
