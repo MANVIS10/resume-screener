@@ -15,7 +15,8 @@
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
 <div class="card">
-    <form method="post" action="/apply/{{ job.id }}" enctype="multipart/form-data">
+    <form method="post" action="/apply/{{ job.id }}" enctype="multipart/form-data"
+          onsubmit="document.getElementById('submit-btn').disabled=true; document.getElementById('submit-btn').textContent='Submitting…';">
         <label for="full_name">Full name</label>
         <input type="text" id="full_name" name="full_name" required>
 
@@ -45,7 +46,7 @@
         <p class="field-hint">Accepted formats: Word (.docx) or PDF (.pdf).</p>
 
         <div style="margin-top:1.5rem;">
-            <button class="btn" type="submit" id="submit-btn" onclick="this.disabled=true; this.textContent='Submitting…'; this.form.submit();">Submit Application</button>
+            <button class="btn" type="submit" id="submit-btn">Submit Application</button>
         </div>
     </form>
 </div>

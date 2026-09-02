@@ -143,11 +143,19 @@ form textarea { min-height: 160px; font-family: inherit; resize: vertical; }
 
 .file-picker {
     margin-top: 0.3rem;
+    position: relative;
+    display: inline-block;
 }
 .file-picker input[type=file] {
     position: absolute;
-    width: 1px; height: 1px;
-    opacity: 0; overflow: hidden;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+.file-picker:focus-within .file-picker-label {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(75, 63, 219, 0.15);
 }
 .file-picker-label {
     display: inline-flex;
