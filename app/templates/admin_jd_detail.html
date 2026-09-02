@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} — Applications{% endblock %}
+{% block nav %}<a href="/admin">All JDs</a> <a href="/admin/logout">Log out</a>{% endblock %}
+{% block content %}
+<h1>{{ job.title }}</h1>
+<p class="meta">{{ job.company }} &middot; posted {{ job.created_at }}</p>
+
+<div class="card">
+    <details>
+        <summary>View full JD text</summary>
+        <pre style="white-space: pre-wrap; font-family: inherit;">{{ job.jd_text }}</pre>
+    </details>
+</div>
+
+<h2>Applications ({{ resumes|length }})</h2>
+{% if not resumes %}
+<div class="card"><p>No applications yet for this role.</p></div>
+{% endif %}
+{% for r in resumes %}
+<div class="card">
+    <div class="job-list-item">
+        <div>
+            <h3>{{ r.name }}</h3>
+            <p class="meta">{{ r.email }} &middot; {{ r.phone }} &middot; {{ r.location }} &middot; age {{ r.age }}</p>
+        </div>
+        {% if r.match_score is not none %}
+        <span class="score-badge {% if r.match_score >= 70 %}score-high{% elif r.match_score >= 40 %}score-mid{% else %}score-low{% endif %}">
+            {{ r.match_score }}/100
+        </span>
+        {% else %}
+        <span class="score-badge score-low">Scoring failed</span>
+        {% endif %}
+    </div>
+    <div class="resume-detail">
+        <p><strong>Fit summary:</strong> {{ r.fit_summary }}</p>
+        {% if r.gaps %}
+        <p><strong>Gaps / follow-up questions:</strong></p>
+        <ul class="gaps-list">
+            {% for g in r.gaps %}<li>{{ g }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+        <p class="meta">Address: {{ r.address }} &middot; Submitted {{ r.submitted_at }}</p>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

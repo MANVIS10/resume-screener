@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Admin — Job Descriptions{% endblock %}
+{% block nav %}<a href="/admin/logout">Log out</a>{% endblock %}
+{% block content %}
+<h1>Job Descriptions</h1>
+
+<div class="card">
+    <h3>Post a new JD</h3>
+    <form method="post" action="/admin/jds">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required>
+
+        <label for="company">Company / Brand</label>
+        <input type="text" id="company" name="company" required>
+
+        <label for="jd_text">Full JD text</label>
+        <textarea id="jd_text" name="jd_text" required></textarea>
+
+        <div style="margin-top:1.5rem;">
+            <button class="btn" type="submit">Post JD</button>
+        </div>
+    </form>
+</div>
+
+<h2>All JDs</h2>
+{% if not jobs %}
+<div class="card"><p>No JDs posted yet.</p></div>
+{% endif %}
+{% for job in jobs %}
+<div class="card job-list-item">
+    <div>
+        <h3>{{ job.title }}</h3>
+        <p>{{ job.company }} &middot; {{ job.resume_count }} application(s)</p>
+    </div>
+    <a class="btn btn-secondary" href="/admin/jds/{{ job.id }}">View Applications</a>
+</div>
+{% endfor %}
+{% endblock %}

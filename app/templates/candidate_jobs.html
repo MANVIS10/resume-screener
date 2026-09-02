@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Open Roles{% endblock %}
+{% block nav %}<a href="/admin/login">Admin</a>{% endblock %}
+{% block content %}
+<h1>Open Roles</h1>
+{% if not jobs %}
+<div class="card"><p>No open roles right now. Check back soon.</p></div>
+{% endif %}
+{% for job in jobs %}
+<div class="card job-list-item">
+    <div>
+        <h3>{{ job.title }}</h3>
+        <p>{{ job.company }}</p>
+    </div>
+    <a class="btn" href="/apply/{{ job.id }}">Apply</a>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Admin Login{% endblock %}
+{% block nav %}<a href="/">Candidate View</a>{% endblock %}
+{% block content %}
+<h1>Admin Login</h1>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+<div class="card">
+    <form method="post" action="/admin/login">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autofocus>
+        <div style="margin-top:1.5rem;">
+            <button class="btn" type="submit">Log in</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
