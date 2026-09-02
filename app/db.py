@@ -72,6 +72,12 @@ def execute(sql: str, params: tuple = ()) -> None:
 
 
 def init_db() -> None:
-    """Create tables. Run once as a migration, not per request."""
+    """Create tables. Run once as a migration, not per request.
+
+    Statements are executed one at a time rather than via executescript, which
+    is not reliably supported over the remote (Hrana) protocol.
+    """
+    statements = [s.strip() for s in SCHEMA.split(";") if s.strip()]
     with db_session() as conn:
-        conn.executescript(SCHEMA)
+        for statement in statements:
+            conn.execute(statement)
