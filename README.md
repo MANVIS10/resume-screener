@@ -42,4 +42,5 @@ want to experiment without touching production data.
 3. `vercel` to link the project, set the four variables above in the Vercel dashboard
    (or via `vercel env add`), then `vercel --prod`.
 
-`vercel.json` rewrites every path to `api/index.py`, which serves the FastAPI app.
+Vercel detects the FastAPI app in `app/main.py` natively and serves every route
+from it — no `vercel.json` or `api/` shim is needed.

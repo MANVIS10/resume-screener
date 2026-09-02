@@ -8,3 +8,5 @@ resume_screener.db
 .testdata/
 server.log
 .vercel
+.env*
+!.env.example
