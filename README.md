@@ -11,6 +11,64 @@ only ever see a confirmation.
 
 **Stack:** FastAPI + Jinja2 · Neon (Postgres) · Groq `openai/gpt-oss-120b` · Vercel.
 
+## System Architecture & Block Workflow
+
+```mermaid
+flowchart TD
+    subgraph ClientLayer ["1. User Entry & Interfaces"]
+        direction LR
+        subgraph CandidateUI ["Candidate Portal (Public)"]
+            C_View["Browse Open JDs<br/><code>GET /</code>"]
+            C_Apply["Submit Form & Upload .docx<br/><code>POST /apply/{jd_id}</code>"]
+            C_Conf["Confirmation Page<br/><i>(No scores exposed)</i>"]
+        end
+        
+        subgraph AdminUI ["Admin Dashboard (Password-Gated)"]
+            A_Login["Admin Authenticate<br/><code>POST /admin/login</code>"]
+            A_Create["Post Job Description<br/><code>POST /admin/jds</code>"]
+            A_View["Review Candidates & Fit Scores<br/><code>GET /admin/jds/{id}</code>"]
+        end
+    end
+
+    subgraph AppServer ["2. App Backend (app/main.py & app/auth.py)"]
+        AuthGuard["Auth & Session Guard<br/>(URLSafeTimedSerializer cookie)"]
+        DocxExtractor["Text Extraction & Validation<br/>(python-docx parser)"]
+    end
+
+    subgraph EvaluationEngine ["3. AI Assessment Engine (app/llm.py)"]
+        GroqClient["Groq LLM Client<br/><code>openai/gpt-oss-120b</code>"]
+        PromptEngine["Evidence-Based System Prompt<br/>(Match score, summary, interview gaps)"]
+        JSONValidator["JSON Parser & Clamping<br/>(Clamped to 0-100)"]
+    end
+
+    subgraph StorageLayer ["4. Persistence Layer (app/db.py)"]
+        DBPool["Neon PostgreSQL<br/>(Pooled Connection String)"]
+        TableJDS[("jds Table<br/>id, title, company, jd_text")]
+        TableResumes[("resumes Table<br/>id, jd_id, candidate info, match_score, fit_summary, gaps_json")]
+    end
+
+    %% Interactions & Data Flow
+    C_View --> AuthGuard
+    C_Apply --> AuthGuard
+    A_Login --> AuthGuard
+    A_Create --> AuthGuard
+    A_View --> AuthGuard
+
+    AuthGuard --> DocxExtractor
+    DocxExtractor --> GroqClient
+    PromptEngine --> GroqClient
+    GroqClient --> JSONValidator
+    JSONValidator --> DBPool
+
+    DBPool --> TableJDS
+    DBPool --> TableResumes
+
+    TableJDS -.-> A_View
+    TableResumes -.-> A_View
+    TableJDS -.-> C_View
+    C_Apply --> C_Conf
+```
+
 See [SHORTWRITEUP.md](SHORTWRITEUP.md) for approach and trade-offs.
 
 ## Local development
